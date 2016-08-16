@@ -9,7 +9,7 @@ import os,sys
 try:
     from setuptools import setup
     setuptools = True
-except ImportError, err:
+except ImportError as err:
     from distutils.core import setup
     setuptools = False
 
@@ -58,6 +58,8 @@ and package/module structures.""",
         author_email = "mcfletch@vrplumber.com",
         install_requires = [
             'SquareMap >= 1.0.3',
+            'six',
+            'future'
         ],
         license = "BSD",
         package_dir = {

@@ -28,6 +28,9 @@ import sys
 from squaremap import squaremap
 from runsnakerun import meliaeloader
 
+from builtins import str as text
+
+
 RANKS = [
     (1024*1024*1024,'%0.1fGB'),
     (1024*1024,'%0.1fMB'),
@@ -53,7 +56,7 @@ class MeliaeAdapter( squaremap.DefaultAdapter ):
         # this is the *weighted* size/contribution of the node 
         try:
             return node['contribution']
-        except KeyError, err:
+        except KeyError as err:
             contribution = int(node.get('totsize',0)/float( len(node.get('parents',())) or 1))
             node['contribution'] = contribution
             return contribution
@@ -65,7 +68,7 @@ class MeliaeAdapter( squaremap.DefaultAdapter ):
         if node.get('name' ):
             result.append( node['name'] )
         elif node.get('value') is not None:
-            result.append( unicode(node['value'])[:32])
+            result.append( text(node['value'])[:32])
         if 'module' in node and not node['module'] in result:
             result.append( ' in %s'%( node['module'] ))
         if node.get( 'size' ):
@@ -126,7 +129,7 @@ class MeliaeAdapter( squaremap.DefaultAdapter ):
         if 'module' in node and not 'filename' in node:
             try:
                 fp, pathname, description = imp.find_module(node['module'])
-            except (ImportError), err:
+            except ImportError as err:
                 node['filename'] = None
             else:
                 if fp:
@@ -138,10 +141,10 @@ class MeliaeAdapter( squaremap.DefaultAdapter ):
 
 class TestApp(wx.App):
     """Basic application for holding the viewing Frame"""
-    handler = wx.PNGHandler()
+    #handler = wx.PNGHandler()
     def OnInit(self):
         """Initialise the application"""
-        wx.Image.AddHandler(self.handler)
+        #wx.Image.AddHandler(self.handler)
         self.frame = frame = wx.Frame( None,
         )
         frame.CreateStatusBar()
@@ -166,7 +169,7 @@ usage = 'meliaeloader.py somefile'
 def main():
     """Mainloop for the application"""
     if not sys.argv[1:]:
-        print usage
+        print(usage)
     else:
         app = TestApp(0)
         app.MainLoop()

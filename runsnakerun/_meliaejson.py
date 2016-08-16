@@ -7,6 +7,7 @@ json + C speedups.  This is *not* however, a full json decoder, it is
 structures, no floats, just ints, strings and lists-of-ints)
 """
 import re, unittest, json
+from builtins import chr
 
 whitespace = r'[ \t]'
 
@@ -58,7 +59,7 @@ def loads( source ):
             value = int( match.group( 'int' ))
         elif match.group( 'string' ) is not None:
             def deescape( match ):
-                return unichr( int( match.group(0)[2:], 16 ))
+                return chr( int( match.group(0)[2:], 16 ))
             value = match.group('string').decode( 'utf-8' )
             value = escape.sub( 
                 deescape,

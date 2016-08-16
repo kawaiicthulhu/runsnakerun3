@@ -2,6 +2,7 @@
 import pstats, os, logging
 log = logging.getLogger(__name__)
 from gettext import gettext as _
+from six import iteritems, itervalues
 
 TREE_CALLS, TREE_FILES = range( 2 )
 
@@ -44,12 +45,12 @@ class PStatsLoader( object ):
     def load( self, stats ):
         """Build a squaremap-compatible model from a pstats class"""
         rows = self.rows
-        for func, raw in stats.iteritems():
+        for func, raw in iteritems(stats):
             try:
                 rows[func] = row = PStatRow( func,raw )
-            except ValueError, err:
+            except ValueError as err:
                 log.info( 'Null row: %s', func )
-        for row in rows.itervalues():
+        for row in itervalues(rows):
             row.weave( rows )
         return self.find_root( rows )
     
@@ -141,12 +142,13 @@ class PStatsLoader( object ):
         root.finalize()
         return root
 
+
 class BaseStat( object ):
     def recursive_distinct( self, already_done=None, attribute='children' ):
         if already_done is None:
             already_done = {}
         for child in getattr(self,attribute,()):
-            if not already_done.has_key( child ):
+            if not child in already_done:
                 already_done[child] = True
                 yield child
                 for descendent in child.recursive_distinct( already_done=already_done, attribute=attribute ):
@@ -165,7 +167,7 @@ class PStatRow( BaseStat ):
         file,line,func = self.key = key
         try:
             dirname,basename = os.path.dirname(file),os.path.basename(file)
-        except ValueError, err:
+        except ValueError as err:
             dirname = ''
             basename = file
         nc, cc, tt, ct, callers = raw
@@ -194,7 +196,7 @@ class PStatRow( BaseStat ):
         self.children.append( child )
 
     def weave( self, rows ):
-        for caller,data in self.callers.iteritems():
+        for caller,data in iteritems(self.callers):
             # data is (cc,nc,tt,ct)
             parent = rows.get( caller )
             if parent:
@@ -205,7 +207,7 @@ class PStatRow( BaseStat ):
         if total:
             try:
                 (cc,nc,tt,ct) = child.callers[ self.key ]
-            except TypeError, err:
+            except TypeError as err:
                 ct = child.callers[ self.key ]
             return float(ct)/total
         return 0
@@ -231,7 +233,7 @@ class PStatGroup( BaseStat ):
         """Finalize our values (recursively) taken from our children"""
         if already_done is None:
             already_done = {}
-        if already_done.has_key( self ):
+        if self in already_done:
             return True
         already_done[self] = True
         self.filter_children()
@@ -297,4 +299,4 @@ if __name__ == "__main__":
     import sys
     p = PStatsLoader( sys.argv[1] )
     assert p.tree
-    print p.tree
+    print(p.tree)

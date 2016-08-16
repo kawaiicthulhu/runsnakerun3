@@ -66,5 +66,5 @@ def appdatadirectory(  ):
     raise OSError( """Unable to determine user's application-data directory, no ${HOME} or ${APPDATA} in environment""" )
 
 if __name__ == "__main__":
-    print 'AppData', appdatadirectory()
+    print('AppData', appdatadirectory())
     

@@ -17,12 +17,14 @@ log = logging.getLogger( __name__ )
 from gettext import gettext as _
 try:
     from _meliaejson import loads as json_loads
-except ImportError, err:
+except ImportError as err:
     try:
         from json import loads as json_loads
-    except ImportError, err:
+    except ImportError as err:
         from simplejson import loads as json_loads
 import sys
+from six import iteritems
+from builtins import int
 
 LOOP_TYPE = _('<loop>')
 MANY_TYPE = _('<many>')
@@ -125,8 +127,8 @@ def children( record, index, key='refs', stop_types=STOP_TYPES ):
     for ref in record.get( key,[]):
         try:
             record = index[ref]
-        except KeyError, err:
-            #print 'No record for %s address %s in %s'%(key, ref, record['address'] )
+        except KeyError as err:
+            #print('No record for %s address %s in %s'%(key, ref, record['address'] ))
             pass # happens when an unreachable references a reachable that has been compressed out...
         else:
             if record['type'] not in stop_types:
@@ -186,7 +188,7 @@ def rewrite_refs( targets, old,new, index, key='refs', single_ref=False ):
         if not isinstance( parent, dict ):
             try:
                 parent = index[parent]
-            except KeyError, err:
+            except KeyError as err:
                 continue 
         rewrite_references( parent[key], old, new, single_ref=single_ref )
 
@@ -267,11 +269,11 @@ def group_children( index, shared, min_kids=10, stop_types=STOP_TYPES, delete_ch
             for address in kid_addresses:
                 try:
                     del index[address]
-                except KeyError, err: 
+                except KeyError as err:
                     pass # already compressed out
                 try:
                     del shared[address]
-                except KeyError, err:
+                except KeyError as err:
                     pass # already compressed out
             index[typ_address]['refs'] = []
         else:
@@ -356,7 +358,7 @@ def find_reachable( modules, index, shared, stop_types=STOP_TYPES ):
 def deparent_unreachable( reachable, shared ):
     """Eliminate all parent-links from unreachable objects from reachable objects
     """
-    for id,shares in shared.iteritems():
+    for id,shares in iteritems(shared):
         if id in reachable: # child is reachable
             filtered = [
                 x 
@@ -382,10 +384,10 @@ def index_size( index ):
     ],0)
 
 def iterindex( index ):
-    for (k,v) in index.iteritems():
+    for (k,v) in iteritems(index):
         if (
             isinstance(v,dict) and 
-            isinstance(k,(int,long))
+            isinstance(k,int)
         ):
             yield v
 
@@ -398,7 +400,7 @@ def bind_parents( index, shared ):
 def check_parents( index, reachable ):
     for item in iterindex( index ):
         if item['type'] == '<many>':
-            print 'parents', item['parents']
+            print('parents', item['parents'])
 
 def load( filename, include_interpreter=False ):
     index = {
@@ -427,8 +429,8 @@ def load( filename, include_interpreter=False ):
     
     for line in open( filename ):
         struct = json_loads( line.strip())
-        index[struct['address']] = struct 
-        
+        index[struct['address']] = struct
+
         struct['root'] = root_ref
         struct['index'] = index_ref
 
@@ -454,7 +456,7 @@ def load( filename, include_interpreter=False ):
 #        for v in iterindex( index )
 #        if v['address'] not in reachable
 #    ], 0 )
-#    print '%s bytes are unreachable from modules'%( unreachable )
+#    print('%s bytes are unreachable from modules'%( unreachable ))
 
     simplify_dicts( index,shared )
 

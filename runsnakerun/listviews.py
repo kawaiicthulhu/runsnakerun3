@@ -2,6 +2,7 @@ import wx, sys, os, logging, operator, traceback
 from gettext import gettext as _
 from squaremap import squaremap
 from wx.lib.agw.ultimatelistctrl import UltimateListCtrl,ULC_REPORT,ULC_VIRTUAL,ULC_VRULES,ULC_SINGLE_SEL
+from builtins import str as text
 
 if sys.platform == 'win32':
     windows = True
@@ -89,10 +90,12 @@ class DataView(wx.ListCtrl):
 
     def CreateControls(self):
         """Create our sub-controls"""
-        wx.EVT_LIST_COL_CLICK(self, self.GetId(), self.OnReorder)
-        wx.EVT_LIST_ITEM_SELECTED(self, self.GetId(), self.OnNodeSelected)
-        wx.EVT_MOTION(self, self.OnMouseMove)
-        wx.EVT_LIST_ITEM_ACTIVATED(self, self.GetId(), self.OnNodeActivated)
+        self.Bind(wx.EVT_LIST_COL_CLICK, self.OnReorder, id=self.GetId())
+        self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.OnNodeSelected,
+                  id=self.GetId())
+        self.Bind(wx.EVT_MOTION, self.OnMouseMove)
+        self.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.OnNodeActivated,
+                  id=self.GetId())
         self.CreateColumns()
     def CreateColumns( self ):
         """Create/recreate our column definitions from current self.columns"""
@@ -118,7 +121,7 @@ class DataView(wx.ListCtrl):
         """We have double-clicked for hit enter on a node refocus squaremap to this node"""
         try:
             node = self.sorted[event.GetIndex()]
-        except IndexError, err:
+        except IndexError as err:
             log.warn(_('Invalid index in node activated: %(index)s'),
                      index=event.GetIndex())
         else:
@@ -132,7 +135,7 @@ class DataView(wx.ListCtrl):
         """We have selected a node with the list control, tell the world"""
         try:
             node = self.sorted[event.GetIndex()]
-        except IndexError, err:
+        except IndexError as err:
             log.warn(_('Invalid index in node selected: %(index)s'),
                      index=event.GetIndex())
         else:
@@ -149,9 +152,9 @@ class DataView(wx.ListCtrl):
         if item > -1:
             try:
                 node = self.sorted[item]
-            except IndexError, err:
+            except IndexError as err:
                 log.warn(_('Invalid index in mouse move: %(index)s'),
-                         index=event.GetIndex())
+                         index=event.GetIndex()) #GetLogicalPosition
             else:
                 wx.PostEvent(
                     self,
@@ -238,7 +241,7 @@ class DataView(wx.ListCtrl):
     def integrateRecords(self, functions):
         """Integrate records from the loader"""
         self.SetItemCount(len(functions))
-        self.sorted = functions[:]
+        self.sorted = list(functions)
         self.reorder()
         self.Refresh()
 
@@ -257,7 +260,7 @@ class DataView(wx.ListCtrl):
         try:
             column = self.columns[col]
             value = column.get(self.sorted[item])
-        except IndexError, err:
+        except IndexError as err:
             return None
         else:
             if value is None:
@@ -267,18 +270,18 @@ class DataView(wx.ListCtrl):
             if column.format:
                 try:
                     return column.format % (value,)
-                except Exception, err:
+                except Exception as err:
                     log.warn('Column %s could not format %r value: %r',
                         column.name, type(value), value
                     )
                     value = column.get(self.sorted[item] )
-                    if isinstance(value,(unicode,str)):
+                    if isinstance(value,(text,str)):
                         return value
-                    return unicode(value)
+                    return text(value)
             else:
-                if isinstance(value,(unicode,str)):
+                if isinstance(value,(text,str)):
                     return value
-                return unicode(value)
+                return text(value)
 
     def OnGetItemToolTip(self, item, col):
         return self.OnGetItemText(item, col) # XXX: do something nicer
